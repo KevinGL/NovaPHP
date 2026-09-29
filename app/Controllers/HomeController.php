@@ -2,10 +2,14 @@
 
 namespace App\Controllers;
 
-class HomeController
+use Src\Controllers\AbstractController;
+
+class HomeController extends AbstractController
 {
-    public function index(int $id)
+    public function index()
     {
-        var_dump($id);
+        //
+
+        $this->prism("Home/index.prism.php", ["name" => "Vinke013"]);
     }
 }

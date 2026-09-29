@@ -14,6 +14,7 @@ class Router
     public function add(string $url, array $params)
     {
         $this->routes[$url] = ["controller" => $params[0], "function" => $params[1]];
+        return $this;
     }
 
     public function getRoutes(): array

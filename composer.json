@@ -2,7 +2,8 @@
     "name": "gayke/nova-php",
     "autoload": {
         "psr-4": {
-            "App\\": "app/"
+            "App\\": "app/",
+            "Src\\": "src/"
         }
     },
     "require": {}
