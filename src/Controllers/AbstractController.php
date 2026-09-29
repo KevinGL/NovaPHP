@@ -7,25 +7,21 @@ class AbstractController
     protected function prism(string $path, array $params = [])
     {
         $totalPath = __DIR__ . "/../../app/View/" . $path;
-        
+
+        if (!file_exists($totalPath))
+        {
+            throw new \Exception("La vue $path n'existe pas.");
+        }
+
         $content = file_get_contents($totalPath);
 
-        $words = explode(" ", $content);
-
-        foreach($params as $key => $value)
+        foreach ($params as $key => $value)
         {
-            $key = "%" . $key;
-            $words = str_replace($key, $value, $words);
+            $content = str_replace('%' . $key, htmlspecialchars((string) $value), $content);
         }
 
-        for($i = 0 ; $i < count($words) ; $i++)
-        {
-            if(str_starts_with($words[$i], "%"))
-            {
-                $words[$i] = "UNDEFINED";
-            }
-        }
+        $content = preg_replace('/%[a-zA-Z0-9_]+/', 'UNDEFINED', $content);
 
-        echo implode(' ', $words);
+        echo $content;
     }
 }
