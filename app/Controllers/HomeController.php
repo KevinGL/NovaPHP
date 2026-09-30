@@ -10,6 +10,6 @@ class HomeController extends AbstractController
     {
         //
 
-        $this->prism("Home/index.prism.php", ["name" => "Vinke013"]);
+        $this->render("Home/index.prism.php", ["name" => "Vinke013", "age" => 20, "ageMin" => 18, "list" => ["maison", "voiture", "arbre"]]);
     }
 }

@@ -7,9 +7,20 @@
     </head>
     <body>
         <div>
-            <h1 class="text-6xl text-white leading-tight text-center md:text-left">Bienvenue %name</h1>
-            <h2>Choisis ton arme %name</h2>
-            <h2>Choisis ton arme %firstname</h2>
+            <h1>Bienvenue {{ $name }}</h1>
+            <h2>Choisis ton arme {{ $name }}</h2>
+            @if ($age > $ageMin)
+                <p>Accès autorisé</p>
+            @elseif ($age === $ageMin)
+                <p>Tout juste majeur !</p>
+            @else
+                <p>Accès refusé</p>
+            @endif
         </div>
+        <ul>
+            @foreach ($list as $l)
+                <li>{{ $l }}</li>
+            @endforeach
+        </ul>
     </body>
 </html>
