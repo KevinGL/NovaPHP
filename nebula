@@ -1,0 +1,266 @@
+<?php
+
+$orders =
+[
+    "serve",
+    "controller",
+    "model",
+    "migration",
+    "astraorm:migrate",
+    "routes"
+];
+
+if(count($argv) < 2)
+{
+    echo "Please indicate an order";
+    die();
+}
+
+if(!in_array($argv[1], $orders))
+{
+    echo "Order unknown";
+    die();
+}
+
+if($argv[1] === "serve")
+{
+    $port = $argv[2] ?? 8000;
+    $public = $argv[3] ?? "public";
+    exec("php -S localhost:$port -t $public");
+}
+
+else
+if($argv[1] === "controller")
+{
+    $controller = $argv[2] ?? "";
+
+    if($controller === "")
+    {
+        echo "Enter name of controller (Ex: HomeController) : ";
+        fscanf(STDIN, "%s", $controller);
+    }
+
+    if($controller === "")
+    {
+        echo "Enter name of controller (Ex: HomeController) : ";
+        fscanf(STDIN, "%s", $controller);
+    }
+
+    while(1)
+    {
+        $pattern = '/^[A-Z][a-zA-Z0-9]*Controller$/';
+        if(!preg_match($pattern, $controller))
+        {
+            echo "Please enter a name with good format : ";
+            fscanf(STDIN, "%s", $controller);
+        }
+
+        else
+        {
+            break;
+        }
+    }
+
+    sscanf($controller, "%sController", $root);
+    $root = substr($controller, 0, strpos($controller, "Controller"));
+
+    $contentFile = "<?php
+
+namespace App\Controllers;
+
+use Src\Controllers\AbstractController;
+
+class $controller extends AbstractController
+{
+    public function index()
+    {
+        //
+
+        \$this->render('$root/index.prism.php', ['controller' => '$controller']);
+    }
+}";
+
+    file_put_contents(__DIR__ . "/app/Controllers/$controller.php", $contentFile);
+
+    mkdir(__DIR__ . "/app/View/$root");
+
+    $contentFile = "<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset=\"UTF-8\">
+        <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">
+        <title>Hello {{ \$controller }}</title>
+    </head>
+    <body>
+        <div>
+            <h1>Hello {{ \$controller }}</h1>
+            <p>Add routes in \"app/Routes/web.php\"</p>
+        </div>
+    </body>
+</html>";
+
+    file_put_contents(__DIR__ . "/app/View/$root/index.prism.php", $contentFile);
+
+    echo "$controller created !";
+}
+
+else
+if($argv[1] === "model")
+{
+    $model = $argv[2] ?? "";
+
+    if($model === "")
+    {
+        echo "Enter name of model (Ex: Home) : ";
+        fscanf(STDIN, "%s", $model);
+    }
+
+    $properties = [];
+
+    while(1)
+    {
+        $propertie = ["name" => ""];
+    
+        echo "Entrer a new property (Enter to quit) : ";
+        fscanf(STDIN, "%s", $propertie["name"]);
+
+        if($propertie["name"] === "")
+        {
+            break;
+        }
+
+        echo "Type of your property (int, string, text, relation, json, date) : ";
+        fscanf(STDIN, "%s", $propertie["type"]);
+        echo "\n";
+
+        if($propertie["type"] === "relation")
+        {
+            echo "What model related : ";
+            fscanf(STDIN, "%s", $propertie["relation"]);
+
+            while(1)
+            {
+                echo "Type of relation (OneToOne, ManyToOne, OneToMany, ManyToMany) : ";
+
+                $relations = ["OneToOne", "ManyToOne", "OneToMany", "ManyToMany"];
+
+                $type = "";
+                fscanf(STDIN, "%s", $type);
+
+                if(!in_array($type, $relations))
+                {
+                    echo "Unknown relation";
+                }
+
+                else
+                {
+                    $propertie["relation"] = $type;
+                    break;
+                }
+            }
+
+            echo "\n";
+        }
+
+        array_push($properties, $propertie);
+    }
+
+    $contentFile = "<?php
+
+namespace App\Models;
+
+class $model
+{
+	/** @var int @Column(type=\"int\", primary_key=true) */
+    private int \$id;
+
+";
+
+    foreach($properties as $p)
+    {
+        $name = $p["name"];
+        $type = $p["type"];
+    
+        if($type === "int")
+        {
+            $contentFile .= "\t/** @var int @Column(type=\"int\") */\n\tprivate string \$$name;\n\n";
+        }
+        
+        else
+        if($type === "string")
+        {
+            $contentFile .= "\t/** @var string @Column(type=\"string\", length=255) */\n\tprivate string \$$name;\n\n";
+        }
+
+        else
+        if($type === "text")
+        {
+            $contentFile .= "\t/** @var string @Column(type=\"text\") */\n\tprivate string \$$name;\n\n";
+        }
+
+        else
+        if($type === "date")
+        {
+            $contentFile .= "\t/** @var \DateTimeImmutable @Column(type=\"date\") */\n\tprivate \DateTimeImmutable \$$name;\n\n";
+        }
+    }
+
+    $contentFile .= "\tpublic function getId(): int\n\t{\n\t\treturn \$this->id;\n\t}\n\n";
+
+    foreach($properties as $p)
+    {
+        $nameProp = $p["name"];
+        $nameFunc = "get" . ucfirst($p["name"]);
+        $type = $p["type"];
+
+        if($type === "text")
+        {
+            $type = "string";
+        }
+
+        else
+        if($type === "date")
+        {
+            $type = "\DateTimeImmutable";
+        }
+    
+        $contentFile .= "\tpublic function $nameFunc(): $type\n\t{\n\t\treturn \$this->$nameProp;\n\t}\n\n";
+    }
+
+    $index = 0;
+
+    $contentFile .= "\tpublic function setId(int \$id): self\n\t{\n\t\t\$this->id = \$id;\n\t\treturn \$this;\n\t}\n\n";
+
+    foreach($properties as $p)
+    {
+        $nameProp = $p["name"];
+        $nameFunc = "set" . ucfirst($p["name"]);
+        $type = $p["type"];
+
+        if($type === "text")
+        {
+            $type = "string";
+        }
+
+        else
+        if($type === "date")
+        {
+            $type = "\DateTimeImmutable";
+        }
+    
+        $contentFile .= "\tpublic function $nameFunc($type \$$nameProp): self\n\t{\n\t\t\$this->$nameProp = \$$nameProp;\n\t\treturn \$this;\n\t}";
+
+        if($index < count($properties) - 1)
+        {
+            $contentFile .= "\n\n";
+        }
+
+        $index++;
+    }
+
+    $contentFile .= "\n}";
+
+    file_put_contents("app/Models/$model.php", $contentFile);
+
+    echo "\nModel $model created !";
+}

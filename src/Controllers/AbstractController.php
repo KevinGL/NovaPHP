@@ -25,8 +25,8 @@ class AbstractController
 
         $contentConverted .= "?>\n" . $content;
     
-        $contentConverted = str_replace("{{", "<?=", $contentConverted);
-        $contentConverted = str_replace("}}", "?>", $contentConverted);
+        $contentConverted = str_replace("{{", "<?= htmlspecialchars(", $contentConverted);
+        $contentConverted = str_replace("}}", ")?>", $contentConverted);
 
         $contentConverted = preg_replace('/\@if\s*\((.*?)\)/', '<?php if ($1): ?>', $contentConverted);
         $contentConverted = preg_replace('/\@elseif\s*\((.*?)\)/', '<?php elseif ($1): ?>', $contentConverted);

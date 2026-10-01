@@ -1,8 +1,15 @@
 <?php
 
-namespace App\UsersController;
+namespace App\Controllers;
 
-class UsersController
+use Src\Controllers\AbstractController;
+
+class UsersController extends AbstractController
 {
-    //
+    public function index()
+    {
+        //
+
+        $this->render('Users/index.prism.php', ['controller' => 'UsersController']);
+    }
 }
