@@ -4,22 +4,22 @@ namespace App\Models;
 
 class User
 {
-	/** @var int @Column(type="int", primary_key=true) */
+	/** @var int @Column(type="int", primary_key=true, name="id") */
     private int $id;
 
-	/** @var string @Column(type="string", length=255) */
+	/** @var string @Column(type="string", length=255, name="username") */
 	private string $username;
 
-	/** @var string @Column(type="string", length=255) */
+	/** @var string @Column(type="string", length=255, name="email") */
 	private string $email;
 
-	/** @var string @Column(type="string", length=255) */
+	/** @var string @Column(type="string", length=255, name="password") */
 	private string $password;
 
-	/** @var string @Column(type="text") */
-	private string $descrition;
+	/** @var string @Column(type="text", name="description") */
+	private string $description;
 
-	/** @var \DateTimeImmutable @Column(type="date") */
+	/** @var \DateTimeImmutable @Column(type="date", name="created_at") */
 	private \DateTimeImmutable $createdAt;
 
 	public function getId(): int
@@ -42,9 +42,9 @@ class User
 		return $this->password;
 	}
 
-	public function getDescrition(): string
+	public function getDescription(): string
 	{
-		return $this->descrition;
+		return $this->description;
 	}
 
 	public function getCreatedAt(): \DateTimeImmutable
@@ -76,9 +76,9 @@ class User
 		return $this;
 	}
 
-	public function setDescrition(string $descrition): self
+	public function setDescription(string $description): self
 	{
-		$this->descrition = $descrition;
+		$this->description = $description;
 		return $this;
 	}
 

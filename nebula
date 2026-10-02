@@ -5,8 +5,8 @@ $orders =
     "serve",
     "controller",
     "model",
-    "migration",
-    "astraorm:migrate",
+    "astra:migration",
+    "astra:migrate",
     "routes"
 ];
 
@@ -171,7 +171,7 @@ namespace App\Models;
 
 class $model
 {
-	/** @var int @Column(type=\"int\", primary_key=true) */
+	/** @var int @Column(type=\"int\", primary_key=true, name=\"id\") */
     private int \$id;
 
 ";
@@ -180,28 +180,29 @@ class $model
     {
         $name = $p["name"];
         $type = $p["type"];
+        $snakeCase = strtolower(preg_replace('/(?<!^)[A-Z]/', '_$0', $name));
     
         if($type === "int")
         {
-            $contentFile .= "\t/** @var int @Column(type=\"int\") */\n\tprivate string \$$name;\n\n";
+            $contentFile .= "\t/** @var int @Column(type=\"int\", name=\"$snakeCase\") */\n\tprivate string \$$name;\n\n";
         }
         
         else
         if($type === "string")
         {
-            $contentFile .= "\t/** @var string @Column(type=\"string\", length=255) */\n\tprivate string \$$name;\n\n";
+            $contentFile .= "\t/** @var string @Column(type=\"string\", length=255, name=\"$snakeCase\") */\n\tprivate string \$$name;\n\n";
         }
 
         else
         if($type === "text")
         {
-            $contentFile .= "\t/** @var string @Column(type=\"text\") */\n\tprivate string \$$name;\n\n";
+            $contentFile .= "\t/** @var string @Column(type=\"text\", name=\"$snakeCase\") */\n\tprivate string \$$name;\n\n";
         }
 
         else
         if($type === "date")
         {
-            $contentFile .= "\t/** @var \DateTimeImmutable @Column(type=\"date\") */\n\tprivate \DateTimeImmutable \$$name;\n\n";
+            $contentFile .= "\t/** @var \DateTimeImmutable @Column(type=\"date\", name=\"$snakeCase\") */\n\tprivate \DateTimeImmutable \$$name;\n\n";
         }
     }
 
@@ -263,4 +264,75 @@ class $model
     file_put_contents("app/Models/$model.php", $contentFile);
 
     echo "\nModel $model created !";
+}
+
+else
+if($argv[1] === "astra:migration")
+{
+    $elements = scandir(__DIR__ . "/app/Models");
+
+    $paths = [];
+    $models = [];
+
+    foreach($elements as $el)
+    {
+        if(strpos($el, ".php"))
+        {
+            array_push($paths, __DIR__ . "/app/Models/" . $el);
+
+            $model = substr($el, 0, strpos($el, ".php"));
+            array_push($models, $model);
+        }
+    }
+
+    $tables = [];
+
+    for($i = 0 ; $i < count($paths) ; $i++)
+    {
+        $path = $paths[$i];
+        $model = $models[$i];
+
+        $table = ["name" => $model];
+        $table["properties"] = [];
+
+        $file = fopen($path, "r");
+
+        while(1)
+        {
+            $line = fgets($file);
+            if(!$line)
+            {
+                break;
+            }
+
+            if(strpos($line, "/** @var"))
+            {
+                $type = substr($line, strpos($line, "type=") + 6);
+                $type = substr($type, 0, strpos($type, "\""));
+
+                $name = substr($line, strpos($line, "name=") + 6);
+                $name = substr($name, 0, strpos($name, "\""));
+
+                $primaryKey = strpos($line, "primary_key=true");
+
+                array_push($table["properties"], ["name" => $name, "type" => $type, "primary_key" => $primaryKey !== false]);
+            }
+        }
+
+        fclose($file);
+
+        array_push($tables, $table);
+    }
+
+    $date = new DateTime();
+    $date->setTimezone(new DateTimeZone("Europe/Paris"));
+
+    $pathMigrations = __DIR__ . "/app/Migrations";
+
+    if(!is_dir($pathMigrations))
+    {
+        mkdir($pathMigrations);
+    }
+
+    file_put_contents($pathMigrations . "/migration_" . $date->getTimestamp() . ".json", json_encode($tables, JSON_PRETTY_PRINT));
 }

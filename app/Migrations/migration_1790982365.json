@@ -1,0 +1,37 @@
+[
+    {
+        "name": "User",
+        "properties": [
+            {
+                "name": "id",
+                "type": "int",
+                "primary_key": true
+            },
+            {
+                "name": "username",
+                "type": "string",
+                "primary_key": false
+            },
+            {
+                "name": "email",
+                "type": "string",
+                "primary_key": false
+            },
+            {
+                "name": "password",
+                "type": "string",
+                "primary_key": false
+            },
+            {
+                "name": "description",
+                "type": "text",
+                "primary_key": false
+            },
+            {
+                "name": "created_at",
+                "type": "date",
+                "primary_key": false
+            }
+        ]
+    }
+]
