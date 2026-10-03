@@ -9,17 +9,17 @@
             },
             {
                 "name": "username",
-                "type": "string",
+                "type": "varchar(255)",
                 "primary_key": false
             },
             {
                 "name": "email",
-                "type": "string",
+                "type": "varchar(255)",
                 "primary_key": false
             },
             {
                 "name": "password",
-                "type": "string",
+                "type": "varchar(255)",
                 "primary_key": false
             },
             {

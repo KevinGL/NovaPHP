@@ -129,7 +129,7 @@ if($argv[1] === "model")
             break;
         }
 
-        echo "Type of your property (int, string, text, relation, json, date) : ";
+        echo "Type of your property (int, string, text, relation, json, date, datetime) : ";
         fscanf(STDIN, "%s", $propertie["type"]);
         echo "\n";
 
@@ -261,7 +261,12 @@ class $model
 
     $contentFile .= "\n}";
 
-    file_put_contents("app/Models/$model.php", $contentFile);
+    if(!is_dir(__DIR__ . "/app/Models"))
+    {
+        mkdir(__DIR__ . "/app/Models");
+    }
+
+    file_put_contents(__DIR__ . "/app/Models/$model.php", $contentFile);
 
     echo "\nModel $model created !";
 }
@@ -315,6 +320,11 @@ if($argv[1] === "astra:migration")
 
                 $primaryKey = strpos($line, "primary_key=true");
 
+                if($type === "string")
+                {
+                    $type = "varchar(255)";
+                }
+
                 array_push($table["properties"], ["name" => $name, "type" => $type, "primary_key" => $primaryKey !== false]);
             }
         }
@@ -335,4 +345,116 @@ if($argv[1] === "astra:migration")
     }
 
     file_put_contents($pathMigrations . "/migration_" . $date->getTimestamp() . ".json", json_encode($tables, JSON_PRETTY_PRINT));
+}
+
+else
+if($argv[1] === "astra:migrate")
+{
+    $content = file_get_contents(__DIR__ . "/.env");
+    if($content === "" || !$content)
+    {
+        echo "Add variable DATABASE_URL in your .env file";
+        die();
+    }
+
+    $url = "";
+
+    $lines = explode("\n", $content);
+    
+    foreach($lines as $line)
+    {
+        [$key, $value] = explode("=", $line);
+        
+        if($key === "DATABASE_URL")
+        {
+            $url = $value;
+            
+            if(str_starts_with($url, "\""))
+            {
+                $url = substr($url, 1, strlen($url));
+            }
+                
+            break;
+        }
+    }
+
+    if($url === "")
+    {
+        echo "Add variable DATABASE_URL in your .env file";
+        die();
+    }
+
+    $elements = scandir(__DIR__ . "/app/Migrations", SCANDIR_SORT_DESCENDING);
+
+    if(!$elements)
+    {
+        die();
+    }
+
+    $migrations = [];
+    foreach($elements as $el)
+    {
+        if(strpos($el, ".json") && count($migrations) < 2)
+        {
+            array_push($migrations, __DIR__ . "/app/Migrations/" . $el);
+        }
+    }
+
+    $request = "";
+
+    if(count($migrations) === 1)
+    {
+        $content = file_get_contents($migrations[0]);
+        $tables = json_decode($content, true);
+
+        foreach($tables as $table)
+        {
+            $name = lcfirst($table["name"]);
+        
+            $request .= "DROP TABLE IF EXISTS `$name`;\n";
+            $request .= "CREATE TABLE IF NOT EXISTS `$name` (";
+
+            foreach($table["properties"] as $property)
+            {
+                $name = $property["name"];
+                $type = $property["type"];
+                $primaryKey = $property["primary_key"];
+            
+                $request .= "`$name` $type NOT NULL";
+
+                if($primaryKey)
+                {
+                    $request .= " AUTO_INCREMENT";
+                }
+
+                $request .= ", ";
+            }
+
+            $request .= "PRIMARY KEY (`id`));";
+        }
+    }
+
+    else
+    {
+        //
+    }
+
+    $db = parse_url($url);
+
+    $dsn = sprintf(
+        "mysql:host=%s;port=%d;dbname=%s;charset=utf8mb4",
+        $db['host'],
+        $db['port'] ?? 3306,
+        ltrim($db['path'], '/')
+    );
+
+    $pdo = new PDO($dsn, $db['user'], $db['pass'] ?? '', [
+        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+    ]);
+
+    if($pdo->exec($request))
+    {
+        echo "Migration ok !";
+    }
 }
