@@ -3,12 +3,20 @@
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Hello {{ $controller }}</title>
+        <title>Liste des utilisateurs</title>
     </head>
     <body>
         <div>
-            <h1>Hello {{ $controller }}</h1>
-            <p>Add routes in "app/Routes/web.php"</p>
+            <h1>Liste des utilisateurs</h1>
+            
+            <ul>
+            
+                @foreach($users as $user)
+                    <li>{{ $user["username"] }}, {{ $user["email"] }}, {{ $user["createdAt"]->format("d/m/Y") }}</li>
+                @endforeach
+
+            </ul>
+            
         </div>
     </body>
 </html>

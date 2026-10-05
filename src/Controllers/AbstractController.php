@@ -194,4 +194,143 @@ class AbstractController
 
         return $datas;
     }
+
+    public function getMethod(): string
+    {
+        return $_SERVER['REQUEST_METHOD'] ?? 'GET';
+    }
+
+    public function varget(string $key = ""): array | string
+    {
+        return $key === "" ? $_GET : $_GET[$key];
+    }
+
+    public function varpost(string $key = ""): array | string
+    {
+        return $key === "" ? $_POST : $_POST[$key];
+    }
+
+    protected function insert(string $modelClass, mixed $model): bool
+    {
+        $tableName = $this->getTableNameFromModel($modelClass);
+        $cols = $this->getTypesCol($tableName);
+
+        $sql = "INSERT INTO $tableName (";
+
+        $index = 0;
+        foreach($cols as $field => $type)
+        {
+            if($field === "id")
+            {
+                continue;
+            }
+        
+            $sql .= "`$field`";
+
+            if($index < count($cols) - 2)
+            {
+                $sql .= ", ";
+            }
+
+            $index++;
+        }
+
+        $sql .= ") VALUES (";
+
+        $params = [];
+
+        $index = 0;
+        foreach($cols as $field => $type)
+        {
+            if($field === "id")
+            {
+                continue;
+            }
+            
+            $camelCaseField = lcfirst(str_replace(' ', '', ucwords(str_replace('_', ' ', $field))));
+            $getter = "get" . ucfirst($camelCaseField);
+
+            $value = $model->$getter();
+
+            if($type === "date")
+            {
+                $value = $value->format("Y-m-d");
+            }
+
+            else
+            if($type === "date_time")
+            {
+                $value = $value->format("Y-m-d H:i:s");
+            }
+
+            $sql .= ":$field";
+
+            $params[$field] = $value;
+
+            if($index < count($cols) - 2)
+            {
+                $sql .= ", ";
+            }
+
+            $index++;
+        }
+
+        $sql .= ")";
+        
+        $th = $this->pdo->prepare($sql);
+        $res = $th->execute($params);
+
+        return $res !== false;
+    }
+
+    protected function redirectTo(string $url)
+    {
+        header("location: $url");
+        die();
+    }
+
+    protected function convertObject(string $modelClass, mixed $object): array
+    {
+        $res = [];
+        
+        $properties = $this->getModelProperties($modelClass);
+
+        foreach($properties as $prop)
+        {
+            $name = $prop->getName();
+            
+            $camelCaseField = lcfirst(str_replace(' ', '', ucwords(str_replace('_', ' ', $name))));
+            $getter = "get" . ucfirst($camelCaseField);
+
+            $res[$name] = $object->$getter();
+        }
+
+        return $res;
+    }
+
+    protected function convertArrayObject(string $modelClass, array $objects): array
+    {
+        $res = [];
+        
+        $properties = $this->getModelProperties($modelClass);
+
+        foreach($objects as $object)
+        {
+            $params = [];
+        
+            foreach($properties as $prop)
+            {
+                $name = $prop->getName();
+                
+                $camelCaseField = lcfirst(str_replace(' ', '', ucwords(str_replace('_', ' ', $name))));
+                $getter = "get" . ucfirst($camelCaseField);
+
+                $params[$name] = $object->$getter();
+            }
+
+            array_push($res, $params);
+        }
+
+        return $res;
+    }
 }
