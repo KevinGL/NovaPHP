@@ -17,10 +17,5 @@
                 <p>Accès refusé</p>
             @endif
         </div>
-        <ul>
-            @foreach ($list as $l)
-                <li>{{ $l }}</li>
-            @endforeach
-        </ul>
     </body>
 </html>

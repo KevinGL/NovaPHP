@@ -18,5 +18,7 @@
             </ul>
             
         </div>
+
+        <a href="/users/add">Ajouter un utilisateur</a>
     </body>
 </html>
